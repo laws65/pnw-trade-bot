@@ -48,8 +48,8 @@ async def check_prices():
         else:
             print(resource)
             print(r.status_code)
-        time.sleep(90)
-        await check_prices()
+     time.sleep(90)
+     await check_prices()
 
 
 
