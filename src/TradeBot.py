@@ -44,10 +44,21 @@ async def check_prices():
             if highest_buy_offer > lowest_sell_offer:
                 print(resource)
                 difference = highest_buy_offer - lowest_sell_offer
-                embed = discord.Embed(title="Trade Alert", description=f"A trade alert for **{resource}**!")
-                embed.add_field(name="Buying for", value=f"Selling {buy_amount} {resource} at [${highest_buy_offer:,}](https://politicsandwar.com/index.php?id=90&display=world&resource1={resource}&buysell=sell&ob=price&od=DEF&maximum=50&minimum=0&search=Go) ppu"),
-                embed.add_field(name="Selling for", value=f"Buying {sell_amount} {resource} at [${lowest_sell_offer:,}](https://politicsandwar.com/index.php?id=90&display=world&resource1={resource}&buysell=buy&ob=price&od=DEF&maximum=50&minimum=0&search=Go) ppu"),
-                embed.add_field(name="Difference", value=f"PPU Difference: ${difference:,}. Maximum profit: ${difference * min(buy_amount, sell_amount):,}")
+                embed = discord.Embed(title="Trade Alert", description=f"A trade alert for **{resource}**!", color=discord.Color.orange())
+                embed.add_field(name="Selling for", value=f"Amount: {sell_amount:,}"
+                                                         f"\n" 
+                                                        f"PPU:${lowest_sell_offer:,}"
+                                                         f"\n"
+                                                         f"[CLICK TO BUY](https://politicsandwar.com/index.php?id=90&display=world&resource1={resource}&buysell=sell&ob=price&od=DEF&maximum=50&minimum=0&search=Go)"),
+                embed.add_field(name="Buying for", value=f"Amount: {buy_amount:,}"
+                                                          f"\n"
+                                                          f"PPU: ${highest_buy_offer:,}"
+                                                          f"\n"
+                                                          f"[CLICK TO SELL](https://politicsandwar.com/index.php?id=90&display=world&resource1={resource}&buysell=buy&ob=price&od=DEF&maximum=50&minimum=0&search=Go)"),
+                embed.add_field(name="Difference", value=f"PPU Difference: ${difference:,}."
+                                                         f"\n"
+                                                         f"Maximum profit: ${difference * min(buy_amount, sell_amount):,}")
+
                 await client.get_channel(813894055347486730).send(embed=embed)
 
         else:
