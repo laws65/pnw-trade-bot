@@ -12,10 +12,9 @@ token = data["bot_token"]
 key = data["api_key"]
 client = commands.Bot(command_prefix = "/")
 
-notification_channel = client.get_channel(768396626825183252)
+notification_channel = client.get_channel(813894055347486730)
 
 base_url = "http://politicsandwar.com/api/"
-
 
 resource_list = ["coal",
                  "oil",
@@ -28,42 +27,55 @@ resource_list = ["coal",
                  "steel",
                  "aluminum",
                  "food"
-                ]
+                 ]
 
 
 async def check_prices():
     print("checking prices")
     for resource in resource_list:
-        r =requests.get(f"{base_url}/tradeprice/?resource={resource}&key={key}")
+        r = requests.get(f"{base_url}/tradeprice/?resource={resource}&key={key}")
         if r.status_code == 200:
             info = r.json()
-            
+
             highest_buy_offer = int(info["highestbuy"]["price"])
+            buy_amount = int(info["highestbuy"]["amount"])
             lowest_sell_offer = int(info["lowestbuy"]["price"])
+            sell_amount = int(info["lowestbuy"]["amount"])
             if highest_buy_offer > lowest_sell_offer:
                 print(resource)
                 difference = highest_buy_offer - lowest_sell_offer
-                await client.get_channel(768396626825183252).send(f"{resource} is selling for {difference} profit ppu. Link: https://politicsandwar.com/index.php?id=90&display=world&resource1={resource}&buysell=sell&ob=price&od=DEF&maximum=50&minimum=0&search=Go")
-            
+                embed = discord.Embed(title="Trade Alert", description=f"A trade alert for **{resource}**!", color=discord.Color.orange())
+                embed.add_field(name="Selling for", value=f"Amount: {sell_amount:,}"
+                                                         f"\n" 
+                                                        f"PPU:${lowest_sell_offer:,}"
+                                                         f"\n"
+                                                         f"[CLICK TO BUY](https://politicsandwar.com/index.php?id=90&display=world&resource1={resource}&buysell=sell&ob=price&od=DEF&maximum=50&minimum=0&search=Go)"),
+                embed.add_field(name="Buying for", value=f"Amount: {buy_amount:,}"
+                                                          f"\n"
+                                                          f"PPU: ${highest_buy_offer:,}"
+                                                          f"\n"
+                                                          f"[CLICK TO SELL](https://politicsandwar.com/index.php?id=90&display=world&resource1={resource}&buysell=buy&ob=price&od=DEF&maximum=50&minimum=0&search=Go)"),
+                embed.add_field(name="Difference", value=f"PPU Difference: ${difference:,}."
+                                                         f"\n"
+                                                         f"Maximum profit: ${difference * min(buy_amount, sell_amount):,}")
+
+                await client.get_channel(813894055347486730).send(embed=embed)
+
         else:
             print(resource)
             print(r.status_code)
-    time.sleep(90)
-    await check_prices()
 
+@tasks.loop(seconds=90)
+async def prices():
+    await check_prices()
 
 
 @client.event
 async def on_ready():
     print("We have logged in as {0.user}".format(client))
-    prices_coroutine = check_prices()
-    await prices_coroutine
+    prices.start()
+
 
 client.run(token)
-
-
-
-
-
 
 print("finished")
