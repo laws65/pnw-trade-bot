@@ -1,18 +1,13 @@
-import requests
-import json
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import time
+import aiohttp
 
-
-with open("secrets.json") as f:
-  data = json.load(f)
-
-token = data["bot_token"]
-key = data["api_key"]
+token = " "
+key = " "
 client = commands.Bot(command_prefix = "/")
 
-notification_channel = client.get_channel(813894055347486730)
+notification_channel = 813894055347486730
 
 base_url = "http://politicsandwar.com/api/"
 
@@ -33,14 +28,18 @@ resource_list = ["coal",
 async def check_prices():
     print("checking prices")
     for resource in resource_list:
-        r = requests.get(f"{base_url}/tradeprice/?resource={resource}&key={key}")
-        if r.status_code == 200:
-            info = r.json()
+        url = f"{base_url}/tradeprice/?resource={resource}&key={key}"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                info = await response.json()
+
+        if response.status == 200:
 
             highest_buy_offer = int(info["highestbuy"]["price"])
             buy_amount = int(info["highestbuy"]["amount"])
             lowest_sell_offer = int(info["lowestbuy"]["price"])
             sell_amount = int(info["lowestbuy"]["amount"])
+
             if highest_buy_offer > lowest_sell_offer:
                 print(resource)
                 difference = highest_buy_offer - lowest_sell_offer
@@ -58,23 +57,31 @@ async def check_prices():
                 embed.add_field(name="Difference", value=f"PPU Difference: ${difference:,}."
                                                          f"\n"
                                                          f"Maximum profit: ${difference * min(buy_amount, sell_amount):,}")
-
-                await client.get_channel(813894055347486730).send(embed=embed)
+                await client.get_channel(notification_channel).send(embed=embed)
 
         else:
             print(resource)
-            print(r.status_code)
+            print(response.status)
+    del highest_buy_offer
+    del lowest_sell_offer
 
 @tasks.loop(seconds=90)
 async def prices():
     await check_prices()
 
+@client.command(brief="Pong!", pass_context=True)
+async def ping(ctx):
+    """ Pong! """
+    before = time.monotonic()
+    message = await ctx.send("Pong!")
+    ping = (time.monotonic() - before) * 1000
+    await message.edit(content=f"Pong!  `{int(ping)}ms`")
+    print(f'Ping {int(ping)}ms')
 
 @client.event
 async def on_ready():
     print("We have logged in as {0.user}".format(client))
     prices.start()
-
 
 client.run(token)
 
