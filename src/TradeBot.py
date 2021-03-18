@@ -36,8 +36,7 @@ async def check_prices():
                 info = await response.json()
 
         if response.status == 200:
-            print(response.status)
-
+          
             highest_buy_offer = int(info["highestbuy"]["price"])
             buy_amount = int(info["highestbuy"]["amount"])
             lowest_sell_offer = int(info["lowestbuy"]["price"])
@@ -63,14 +62,11 @@ async def check_prices():
                                                          f"Maximum profit: ${max_profit:,}")
                 if max_profit < 49999:
                     await client.get_channel(notification_channel_low).send(embed=embed)
-                if max_profit > 50000:
-                    await client.get_channel(notification_channel_high).send(embed=embed)
                 else:
-                    pass
+                    await client.get_channel(notification_channel_high).send(embed=embed)
 
         else:
             print(resource)
-            print(response.status)
     del highest_buy_offer
     del lowest_sell_offer
 
